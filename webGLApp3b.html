@@ -17,7 +17,7 @@
 
             void main(void) {
                 texCoords = aVertexTexCoords;
-                gl_Position = vec4(aVertexPosition, 1.0);
+                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
             }
         </script>
         
@@ -123,8 +123,35 @@
             
             var quadVertexPositionBuffer;
             var quadVertexColorBuffer;
+            var triangleVertexPositionBuffer;
+            var triangleVertexColorBuffer;
             
             function loadSceneOnGPU() { 
+                 //Triangulo
+                triangleVertexPositionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+                var vertices = [
+                     0.0, 1.0, 0.0,
+                    -1.0, -1.0, 0.0,
+                     1.0, -1.0, 0.0
+                ];
+                
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+                triangleVertexPositionBuffer.itemSize = 3;
+                triangleVertexPositionBuffer.numItems = 3;
+
+                //Triangulo textura
+                triangleVertexColorBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
+                var tri_texture = [
+                    0.0, 0.75,
+                    0.5, 0.5, 
+                    0.5, 1.0
+                ];
+                
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tri_texture), gl.STATIC_DRAW);
+                triangleVertexColorBuffer.itemSize = 2;
+                triangleVertexColorBuffer.numItems = 3;
                 //Cuadrado
                 quadVertexPositionBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexPositionBuffer);
@@ -140,17 +167,17 @@
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quad_vertices), gl.STATIC_DRAW);
                 quadVertexPositionBuffer.itemSize = 3;
                 quadVertexPositionBuffer.numItems = 6;
-                //Color Cuadrado 
+                //Textura Cuadrado 
                 quadVertexColorBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexColorBuffer);
                 var quad_texture = [
-                     0.0, 1.0,
-                     0.0, 0.0,
-                     1.0, 1.0,
+                     0.5, 0.5,
+                     0.5, 0.0,
+                     1.0, 0.5,
 
-                     0.0, 0.0,
+                     0.5, 0.0,
                      1.0, 0.0,
-                     1.0, 1.0
+                     1.0, 0.5
                 ];
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quad_texture), gl.STATIC_DRAW);
                 quadVertexColorBuffer.itemSize = 2;
@@ -183,10 +210,20 @@
                 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                 mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+                //Triangulo
+                mat4.identity(mvMatrix);
+                mat4.translate(mvMatrix, [-3.0, 0.0, -10.0]);
                
+                gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+                gl.vertexAttribPointer(shaderProgram.triangleVertexPositionBuffer, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
+                gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, triangleVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+                sendMatricesToShader();
+                gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
                 //Cuadrado
                 mat4.identity(mvMatrix);
-                mat4.translate(mvMatrix, [0.0, 0.0, -10.0]);
+                mat4.translate(mvMatrix, [3.0, 0.0, -10.0]);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexPositionBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, quadVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
