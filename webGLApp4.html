@@ -120,7 +120,9 @@
                 gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
             }
 
-
+            function deg2Rad(deg){
+                return deg* Math.PI / 180;
+            }
             var currentlyPressedKeys = {};
             function handleKeyDown(event){
                 currentlyPressedKeys[event.keyCode] = true;
@@ -187,6 +189,20 @@
                 }
             }
 
+            var mvMatrixStack = [];
+
+            function mvPushMatrix(){
+                var copy = mat4.create();
+                mat4.set(mvMatrix,copy);
+                mvMatrixStack.push(copy);
+            }
+
+            function mvPopMatrix(){
+                if(mvMatrixStack.length == 0){
+                    throw "Invalid popMatrix!";
+                }
+                mvMatrix = mvMatrixStack.pop();
+            }
 
 
 
@@ -281,9 +297,14 @@
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                 mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
+                mat4.identity(mvMatrix);
+                mat4.translate(mvMatrix, [0.0, -0.0, -10.0]);
+                mat4.multiply(mvMatrix, mouseRotationMatrix);
+
 
                 //Triangulo
-                mat4.identity(mvMatrix);
+                mvPushMatrix();
+               
                 mat4.translate(mvMatrix, [-3.0, 0.0, -10.0]);
                
                 gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
@@ -291,9 +312,11 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, triangleVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
                 sendMatricesToShader();
+                mvPopMatrix();
                 gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
                 //Cuadrado
-                mat4.identity(mvMatrix);
+                mvPushMatrix()
+                
                 mat4.translate(mvMatrix, [3.0, 0.0, -10.0]);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexPositionBuffer);
@@ -305,6 +328,7 @@
                 gl.bindTexture(gl.TEXTURE_2D, myTexture);
                 gl.uniform1i(shaderProgram.texture, 0);
                 sendMatricesToShader();
+                mvPopMatrix();
                 gl.drawArrays(gl.TRIANGLES, 0, quadVertexPositionBuffer.numItems);
              
                 
