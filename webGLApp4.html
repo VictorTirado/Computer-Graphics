@@ -135,19 +135,28 @@
             function handleKeys()
             {
                 if(currentlyPressedKeys[82]){
-
+                    mat4.identity(newRotationMatrix)
+                    panningX = 0.0;
+                    panningY = 0.0;
                 }
             }
 
             var mouseDown = false;
             var lastMouseX = null;
             var lastMouseY = null;
-           
+            var rotating = false;
+            var panning = false;
+            var panningX = 0.0;
+            var panningY = 0.0;
 
             function handleMouseDown(event){
                 mouseDown = true;
                 if(event.button ==0){
-
+                    rotating = true;
+                }
+                if(event.button == 1)
+                {
+                    panning = true;
                 }
                 lastMouseX = event.clientX;
                 lastMouseY = event.clientY;
@@ -166,26 +175,43 @@
                 var deltaX = newX - lastMouseX;
                 var deltaY = newY- lastMouseY;
 
+                if(panning == true){
+                   
+                    console.log("NewX:",newX);
+                    console.log("NewY:",newY);
+                    console.log("DeltaX:",deltaX);
+                    console.log("DeltaY:",deltaY);
+                    panningX = deltaX/10.0;
+                    panningY = deltaY/10.0;
+                }
+
+                if(rotating == true){
                 var newRotationMatrix = mat4.create();
                 mat4.identity(newRotationMatrix);
                 mat4.rotate(newRotationMatrix,deg2Rad(deltaX/10),[0,1,0]);
                 mat4.rotate(newRotationMatrix,deg2Rad(deltaY/10),[1,0,0]);
+                //mat4.rotate(newRotationMatrix,deg2Rad(deltaX/10),[0,0,1]);
                 mat4.multiply(newRotationMatrix, mouseRotationMatrix,mouseRotationMatrix);
+                console.log(newRotationMatrix);
+                }
 
                 lastMouseX = newX;
                 lastMouseY = newY;
 
                 if(event.button ==0)
                 {
-
+                   
                 }
             }
 
             function handleMouseUp(event){
                 mouseDown = false;
-                if(event.button ==0)
+                rotating = false;
+                panning = false;
+                if(event.button ==1)
                 {
-
+                    //console.log(panningX);
+                   
                 }
             }
 
@@ -298,7 +324,7 @@
                 mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
                 mat4.identity(mvMatrix);
-                mat4.translate(mvMatrix, [0.0, -0.0, -10.0]);
+                mat4.translate(mvMatrix, [panningX, -panningY, -10.0]);
                 mat4.multiply(mvMatrix, mouseRotationMatrix);
 
 
