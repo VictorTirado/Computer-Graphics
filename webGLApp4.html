@@ -131,11 +131,12 @@
             function handleKeyUp(event){
                 currentlyPressedKeys[event.keyCode] = false;
             }
+           
 
             function handleKeys()
             {
                 if(currentlyPressedKeys[82]){
-                    mat4.identity(newRotationMatrix)
+                    mat4.identity(mouseRotationMatrix)
                     panningX = 0.0;
                     panningY = 0.0;
                 }
@@ -148,6 +149,7 @@
             var panning = false;
             var panningX = 0.0;
             var panningY = 0.0;
+          
 
             function handleMouseDown(event){
                 mouseDown = true;
@@ -177,20 +179,20 @@
 
                 if(panning == true){
                    
-                    console.log("NewX:",newX);
-                    console.log("NewY:",newY);
-                    console.log("DeltaX:",deltaX);
-                    console.log("DeltaY:",deltaY);
-                    panningX = deltaX/10.0;
-                    panningY = deltaY/10.0;
+                 
+                    panningX += deltaX/10.0;
+                    panningY += deltaY/10.0;
+                    console.log("panningX:",panningX);
+                    console.log("panningY:",panningY);
                 }
 
                 if(rotating == true){
-                var newRotationMatrix = mat4.create();
+                var  newRotationMatrix = mat4.create();
+                mat4.identity(newRotationMatrix);
+                newRotationMatrix = mat4.create();
                 mat4.identity(newRotationMatrix);
                 mat4.rotate(newRotationMatrix,deg2Rad(deltaX/10),[0,1,0]);
                 mat4.rotate(newRotationMatrix,deg2Rad(deltaY/10),[1,0,0]);
-                //mat4.rotate(newRotationMatrix,deg2Rad(deltaX/10),[0,0,1]);
                 mat4.multiply(newRotationMatrix, mouseRotationMatrix,mouseRotationMatrix);
                 console.log(newRotationMatrix);
                 }
@@ -198,21 +200,14 @@
                 lastMouseX = newX;
                 lastMouseY = newY;
 
-                if(event.button ==0)
-                {
-                   
-                }
+               
             }
 
             function handleMouseUp(event){
                 mouseDown = false;
                 rotating = false;
                 panning = false;
-                if(event.button ==1)
-                {
-                    //console.log(panningX);
-                   
-                }
+               
             }
 
             var mvMatrixStack = [];
@@ -323,15 +318,16 @@
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                 mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
+                
                 mat4.identity(mvMatrix);
-                mat4.translate(mvMatrix, [panningX, -panningY, -10.0]);
+                mat4.translate(mvMatrix, [panningX, -panningY, 0.0]);
                 mat4.multiply(mvMatrix, mouseRotationMatrix);
 
 
                 //Triangulo
                 mvPushMatrix();
                
-                mat4.translate(mvMatrix, [-3.0, 0.0, -10.0]);
+                mat4.translate(mvMatrix, [-2.0, 0.0, -5.0]);
                
                 gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
                 gl.vertexAttribPointer(shaderProgram.triangleVertexPositionBuffer, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -341,9 +337,9 @@
                 mvPopMatrix();
                 gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
                 //Cuadrado
-                mvPushMatrix()
+                mvPushMatrix();
                 
-                mat4.translate(mvMatrix, [3.0, 0.0, -10.0]);
+                mat4.translate(mvMatrix, [2.0, 0.0, -5.0]);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, quadVertexPositionBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, quadVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
