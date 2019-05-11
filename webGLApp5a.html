@@ -8,27 +8,21 @@
 
         <script id="shader-vs" type="x-shader/x-vertex">
             attribute vec3 aVertexPosition;
-            attribute vec2 aVertexTexCoords;
 
             uniform mat4 uMVMatrix;
             uniform mat4 uPMatrix;
 
-            varying vec2 texCoords;
-
             void main(void) {
-                texCoords = aVertexTexCoords;
+               
                 gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
             }
         </script>
         
         <script id="shader-fs" type="x-shader/x-fragment">
             precision mediump float;
-    
-            varying vec2 texCoords;
-            uniform sampler2D texture;
 
             void main(void) {
-                gl_FragColor = texture2D(texture,texCoords);
+                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
             }
         </script>
         
@@ -102,13 +96,10 @@
 
                 shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
                 gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
-                shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexTexCoords");
-                gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
-
-
                
                 shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
                 shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+                
             }
 
 
@@ -241,22 +232,17 @@
                 request.onreadystatechange = function(){
                     if(request.readyState == 4){
                         handleLoadModel(JSON.parse(request.responseText));
+                        console.log("MODELO CARGADO BIEN");
                     }
                 }
                 request.send();
+                
             }
 
             var modelVertexPositionBuffer;
-            var modelVertexNormalBuffer;
             var modelVertexIndexBuffer;
 
             function handleLoadModel(modelData){
-                 modelVertexNormalBuffer = gl.createBuffer();
-                 gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexNormalBuffer);
-                 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(modelData.vertexNormals),gl.STATIC_DRAW);
-                 modelVertexNormalBuffer.itemSize = 3;
-                 modelVertexNormalBuffer.numItems = modelData.vertexNormals.length /3;
-
                 modelVertexPositionBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexPositionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(modelData.vertexPositions),gl.STATIC_DRAW);
@@ -265,9 +251,10 @@
 
                 modelVertexIndexBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Float32Array(modelData.indices),gl.STATIC_DRAW);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(modelData.indices),gl.STATIC_DRAW);
                 modelVertexIndexBuffer.itemSize = 1;
                 modelVertexIndexBuffer.numItems = modelData.indices.length;
+                console.log("MODELO CARGADO BIEN X 2");
             }
 
 
