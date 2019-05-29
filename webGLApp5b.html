@@ -312,7 +312,7 @@
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                                             modelVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
                     
-                     var color = [ 0.0, 1.0, 0.0];
+                     var color = [ 1.0, 0.55, 0.0];
                     gl.uniform3fv(shaderProgram.colorUniform, color);
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
                     sendMatricesToShader();
