@@ -326,7 +326,7 @@
                     
                     mat4.translate(mvMatrix, [2.5, 0.0, -5.0]);
                     mat4.scale(mvMatrix,[1.0,1.0,1.0]);
-                    mat4.rotate(mvMatrix, 3.1415, [0.0, 0.0, 1.0]);
+                    mat4.rotate(mvMatrix, 3.1415, [0.0, 0.0, 0.0]);
                     gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexPositionBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                     model2VertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
@@ -371,6 +371,7 @@
 
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
+                gl.enable(gl.CULL_FACE);
                 //Added//
                 renderingLoop();
             }
