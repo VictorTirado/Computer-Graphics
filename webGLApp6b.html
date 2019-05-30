@@ -393,11 +393,12 @@
                 if(model2VertexPositionBuffer)
                 {
                     mvPushMatrix();
-                    var Ka = [0.0, 0, 1];
-                    var Kd = [0.0, 0, 0.6];
                     mat4.translate(mvMatrix, [3.5, -0.5, -5.0]);
                     mat4.scale(mvMatrix,[1.5,1.5,1.5]);
                     mat4.rotate(mvMatrix, -3.1415/2, [1.0, 0.0, 0.0]);
+                    var Ka = [0.0, 0, 1];
+                    var Kd = [0.0, 0, 0.96];
+
                     gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexPositionBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                     model2VertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
