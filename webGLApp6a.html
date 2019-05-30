@@ -8,21 +8,24 @@
 
         <script id="shader-vs" type="x-shader/x-vertex">
             attribute vec3 aVertexPosition;
+            attribute vec3 aVertexNormal;
 
             uniform mat4 uMVMatrix;
             uniform mat4 uPMatrix;
 
+            varying vec3 shadedColor;
+
             void main(void) {
-               
+               shadedColor = aVertexNormal * 0.5 + vec3(0.5);
                 gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
             }
         </script>
         
         <script id="shader-fs" type="x-shader/x-fragment">
             precision mediump float;
-
+            varying vec3 shadedColor;
             void main(void) {
-                gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+                gl_FragColor = vec4(shadedColor, 1.0);
             }
         </script>
         
@@ -96,9 +99,12 @@
 
                 shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
                 gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+                shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+                gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
                
                 shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
                 shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+                shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "color");
                 
             }
 
@@ -239,8 +245,22 @@
                 
             }
 
+            function loadModel2(){
+                var request = new XMLHttpRequest();
+                request.open("GET","models/Laptop.json");
+                request.onreadystatechange = function(){
+                    if(request.readyState == 4){
+                        handleLoadModel2(JSON.parse(request.responseText));
+                        console.log("MODELO2 CARGADO BIEN");
+                    }
+                }
+                request.send();
+                
+            }
+
             var modelVertexPositionBuffer;
             var modelVertexIndexBuffer;
+            var modelVertexNormalBuffer;
 
             function handleLoadModel(modelData){
                 modelVertexPositionBuffer = gl.createBuffer();
@@ -249,12 +269,44 @@
                 modelVertexPositionBuffer.itemSize = 3;
                 modelVertexPositionBuffer.numItems = modelData.vertexPositions.length /3;
 
+                modelVertexNormalBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexNormalBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(modelData.vertexNormals),gl.STATIC_DRAW);
+                modelVertexNormalBuffer.itemSize = 3;
+                modelVertexNormalBuffer.numItems = modelData.vertexNormals.length /3;
+
                 modelVertexIndexBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
                 gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(modelData.indices),gl.STATIC_DRAW);
                 modelVertexIndexBuffer.itemSize = 1;
                 modelVertexIndexBuffer.numItems = modelData.indices.length;
                 console.log("MODELO CARGADO BIEN X 2");
+            }
+
+
+            var model2VertexPositionBuffer;
+            var model2VertexIndexBuffer;
+            var model2VertexNormalBuffer;
+
+            function handleLoadModel2(modelData){
+                model2VertexPositionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexPositionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(modelData.vertexPositions),gl.STATIC_DRAW);
+                model2VertexPositionBuffer.itemSize = 3;
+                model2VertexPositionBuffer.numItems = modelData.vertexPositions.length /3;
+
+                model2VertexNormalBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexNormalBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(modelData.vertexNormals),gl.STATIC_DRAW);
+                model2VertexNormalBuffer.itemSize = 3;
+                model2VertexNormalBuffer.numItems = modelData.vertexNormals.length /3;
+
+                model2VertexIndexBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,model2VertexIndexBuffer);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(modelData.indices),gl.STATIC_DRAW);
+                model2VertexIndexBuffer.itemSize = 1;
+                model2VertexIndexBuffer.numItems = modelData.indices.length;
+                console.log("MODELO2 CARGADO BIEN X 2");
             }
 
 
@@ -271,16 +323,41 @@
 
                 if(modelVertexPositionBuffer)
                 {
-                    //mvPushMatrix();
+                    mvPushMatrix();
+                    
                     mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
                     mat4.scale(mvMatrix,[0.1,0.1,0.1]);
                     gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexPositionBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                                             modelVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+                    
+                    gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexNormalBuffer);
+                    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute,
+                                            modelVertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
                     sendMatricesToShader();
                     gl.drawElements(gl.TRIANGLES,modelVertexIndexBuffer.numItems,gl.UNSIGNED_SHORT, 0);
-                    //mvPopMatrix();
+                    mvPopMatrix();
+                }
+
+                if(model2VertexPositionBuffer)
+                {
+                    mvPushMatrix();
+                    
+                    mat4.translate(mvMatrix, [3.5, -0.5, -5.0]);
+                    mat4.scale(mvMatrix,[1.5,1.5,1.5]);
+                    mat4.rotate(mvMatrix, -3.1415/2, [1.0, 0.0, 0.0]);
+                    gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexPositionBuffer);
+                    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
+                    model2VertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexNormalBuffer);
+                    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute,
+                                            model2VertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,model2VertexIndexBuffer);
+                    sendMatricesToShader();
+                    gl.drawElements(gl.TRIANGLES,model2VertexIndexBuffer.numItems,gl.UNSIGNED_SHORT, 0);
+                    mvPopMatrix();
                 }
                
             }
@@ -312,9 +389,12 @@
 
                 //Added//
                 loadModel();
+                loadModel2();
 
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
+                gl.enable(gl.CULL_FACE);
+               
                 //Added//
                 renderingLoop();
             }
