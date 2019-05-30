@@ -26,7 +26,7 @@
             void main(void) {
                 vec3 N = uNormalMatrix * normalize(aVertexNormal);
                 float NdotL = max(dot(N,L),0.0);
-                shadedColor = aVertexNormal * 0.5 + vec3(0.5);
+                shadedColor =  Ka * Ia + Kd * Ip * NdotL;
 
                 gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
             }
@@ -36,7 +36,7 @@
             precision mediump float;
 
             varying vec3 shadedColor;
-            
+
             void main(void) {
                 gl_FragColor = vec4(shadedColor, 1.0);
             }
@@ -117,10 +117,26 @@
                
                 shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
                 shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+                shaderProgram.normalMatrixUniform = gl.getUniformLocation(shaderProgram, "uNormalMatrix");
+
+                shaderProgram.LUniform = gl.getUniformLocation(shaderProgram, "L");
+                shaderProgram.IaUniform = gl.getUniformLocation(shaderProgram, "Ia");
+                shaderProgram.IpUniform = gl.getUniformLocation(shaderProgram, "Ip");
+
+                shaderProgram.KaUniform = gl.getUniformLocation(shaderProgram, "Ka");
+                shaderProgram.KdUniform = gl.getUniformLocation(shaderProgram, "Kd");
+
                 shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "color");
+
+                var defLight = new light();
+                var normalized_L = vec3.create();
+                vec3.normalize(defLight.lightDirection, normalized_L);
+                gl.uniform3fv(shaderProgram.LUniform, normalized_L);
+                gl.uniform3fv(shaderProgram.IaUniform, defLight.Ia);
+                gl.uniform3fv(shaderProgram.IpUniform, defLight.Ip);
+
                 
             }
-
 
             var mvMatrix = mat4.create();
             var pMatrix = mat4.create();
@@ -128,7 +144,20 @@
             function sendMatricesToShader() {
                 gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
                 gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+
+                var normalMatrix = mat3.create();
+                mat4.toInverseMat3(mvMatrix, normalMatrix);
+                mat3.transpose(normalMatrix);
+                gl.uniformMatrix3fv(shaderProgram.normalMatrixUniform, false, normalMatrix);
             }
+
+             function light(){
+                this.lightDirection = [0,1,0];
+                this.Ia = [0.8,0.3,0.3];
+                this.Ip = [0.5,0.5,0.5];
+            }
+
+           
 
             function deg2Rad(deg){
                 return deg* Math.PI / 180;
@@ -340,13 +369,21 @@
                     
                     mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
                     mat4.scale(mvMatrix,[0.1,0.1,0.1]);
+                    var Ka = [1.0, 0.55, 0.0];
+                    var Kd = [1, 0.51, 0];
+                   
+                   
                     gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexPositionBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                                             modelVertexPositionBuffer.itemSize,gl.FLOAT,false,0,0);
-                    
+
                     gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexNormalBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute,
                                             modelVertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
+
+                    gl.uniform3fv(shaderProgram.KaUniform, Ka);
+				    gl.uniform3fv(shaderProgram.KdUniform, Kd);
+
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
                     sendMatricesToShader();
                     gl.drawElements(gl.TRIANGLES,modelVertexIndexBuffer.numItems,gl.UNSIGNED_SHORT, 0);
@@ -356,7 +393,8 @@
                 if(model2VertexPositionBuffer)
                 {
                     mvPushMatrix();
-                    
+                    var Ka = [0.0, 0, 1];
+                    var Kd = [0.0, 0, 0.6];
                     mat4.translate(mvMatrix, [3.5, -0.5, -5.0]);
                     mat4.scale(mvMatrix,[1.5,1.5,1.5]);
                     mat4.rotate(mvMatrix, -3.1415/2, [1.0, 0.0, 0.0]);
@@ -367,6 +405,10 @@
                     gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexNormalBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute,
                                             model2VertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
+
+                    gl.uniform3fv(shaderProgram.KaUniform, Ka);
+                    gl.uniform3fv(shaderProgram.KdUniform, Kd);
+                    
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,model2VertexIndexBuffer);
                     sendMatricesToShader();
                     gl.drawElements(gl.TRIANGLES,model2VertexIndexBuffer.numItems,gl.UNSIGNED_SHORT, 0);
