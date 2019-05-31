@@ -14,31 +14,41 @@
             uniform mat4 uPMatrix;
             uniform mat3 uNormalMatrix;
 
-            uniform vec3 L;
-            uniform vec3 Ia;
-            uniform vec3 Ip;
-
-            uniform vec3 Ka;
-            uniform vec3 Kd;
-
-            varying vec3 shadedColor;
+            varying vec3 normalEye;
+            varying vec4 positionEye;
 
             void main(void) {
-                vec3 N = uNormalMatrix * normalize(aVertexNormal);
-                float NdotL = max(dot(N,L),0.0);
-                shadedColor =  Ka * Ia + Kd * Ip * NdotL;
+                normalEye = normalize(uNormalMatrix * aVertexNormal);
+                positionEye = uMVMatrix * vec4(aVertexPosition, 1.0);
 
-                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+                gl_Position = uPMatrix * positionEye;
             }
         </script>
         
         <script id="shader-fs" type="x-shader/x-fragment">
             precision mediump float;
 
-            varying vec3 shadedColor;
+            uniform vec3 Ia, Id, Is;
+            uniform vec3 Ka, Kd, Ks; 
+            uniform float shininess; 
+
+            varying vec3 normalEye;
+            varying vec4 positionEye;
+
+            const vec3 lightPositionEye = vec3(-1.0, 3.0, 0.0);
 
             void main(void) {
-                gl_FragColor = vec4(shadedColor, 1.0);
+                vec3 L = normalize(lightPositionEye - positionEye.xyz);
+                vec3 N = normalize(normalEye);
+                vec3 V = normalize(-positionEye.xyz);
+
+                float NdotL = max(dot(N, L), 0.0);
+
+                vec3 R = reflect(-L, N);
+                float RdotV = pow(max(dot(R, V), 0.0), shininess);
+
+                vec3 shadedColor = Ka * Ia +  Kd * Id * NdotL + Ks * Is * RdotV;
+                gl_FragColor = vec4(shadedColor,1.0);
             }
         </script>
         
@@ -118,22 +128,26 @@
                 shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
                 shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
                 shaderProgram.normalMatrixUniform = gl.getUniformLocation(shaderProgram, "uNormalMatrix");
+               
 
-                shaderProgram.LUniform = gl.getUniformLocation(shaderProgram, "L");
+              
                 shaderProgram.IaUniform = gl.getUniformLocation(shaderProgram, "Ia");
-                shaderProgram.IpUniform = gl.getUniformLocation(shaderProgram, "Ip");
+                shaderProgram.IdUniform = gl.getUniformLocation(shaderProgram, "Id");
+                shaderProgram.IsUniform = gl.getUniformLocation(shaderProgram, "Is");
 
                 shaderProgram.KaUniform = gl.getUniformLocation(shaderProgram, "Ka");
                 shaderProgram.KdUniform = gl.getUniformLocation(shaderProgram, "Kd");
+                shaderProgram.KsUniform = gl.getUniformLocation(shaderProgram, "Ks");
 
-                shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "color");
+                shaderProgram.ShininessUniform = gl.getUniformLocation(shaderProgram, "shininess");
+
+          
 
                 var defLight = new light();
-                var normalized_L = vec3.create();
-                vec3.normalize(defLight.lightDirection, normalized_L);
-                gl.uniform3fv(shaderProgram.LUniform, normalized_L);
                 gl.uniform3fv(shaderProgram.IaUniform, defLight.Ia);
-                gl.uniform3fv(shaderProgram.IpUniform, defLight.Ip);
+                gl.uniform3fv(shaderProgram.IdUniform, defLight.Id);
+                gl.uniform3fv(shaderProgram.IsUniform, defLight.Is);
+               
 
                 
             }
@@ -152,9 +166,9 @@
             }
 
              function light(){
-                this.lightDirection = [0,1,0];
-                this.Ia = [0.8,0.3,0.3];
-                this.Ip = [0.5,0.5,0.5];
+                this.Ia = [0.3,0.3,0.3];
+                this.Id = [0.5,0.5,0.5];
+                this.Is = [1.0, 1.0, 1.0];
             }
 
            
@@ -370,7 +384,9 @@
                     mat4.translate(mvMatrix, [0.0, 0.0, -5.0]);
                     mat4.scale(mvMatrix,[0.1,0.1,0.1]);
                     var Ka = [1.0, 0.55, 0.0];
-                    var Kd = [1, 0.51, 0];
+                    var Kd = [1, 0.55, 0];
+                    var Ks = [1.0, 0.55, 0.0];
+                    var shininess = 0.1;
                    
                    
                     gl.bindBuffer(gl.ARRAY_BUFFER,modelVertexPositionBuffer);
@@ -383,6 +399,9 @@
 
                     gl.uniform3fv(shaderProgram.KaUniform, Ka);
 				    gl.uniform3fv(shaderProgram.KdUniform, Kd);
+                    gl.uniform3fv(shaderProgram.KsUniform, Ks);
+                    gl.uniform1f(shaderProgram.ShininessUniform, shininess);
+
 
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,modelVertexIndexBuffer);
                     sendMatricesToShader();
@@ -397,7 +416,9 @@
                     mat4.scale(mvMatrix,[1.5,1.5,1.5]);
                     mat4.rotate(mvMatrix, -3.1415/2, [1.0, 0.0, 0.0]);
                     var Ka = [0.0, 0, 1];
-                    var Kd = [0.0, 0, 0.96];
+                    var Kd = [0, 0., 0.9];
+                    var Ks = [0.5,0.5,1];
+                    var shininess = 0.1;
 
                     gl.bindBuffer(gl.ARRAY_BUFFER,model2VertexPositionBuffer);
                     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
@@ -408,7 +429,9 @@
                                             model2VertexNormalBuffer.itemSize,gl.FLOAT,false,0,0);
 
                     gl.uniform3fv(shaderProgram.KaUniform, Ka);
-                    gl.uniform3fv(shaderProgram.KdUniform, Kd);
+				    gl.uniform3fv(shaderProgram.KdUniform, Kd);
+                    gl.uniform3fv(shaderProgram.KsUniform, Ks);
+                    gl.uniform1f(shaderProgram.ShininessUniform, shininess);
                     
                     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,model2VertexIndexBuffer);
                     sendMatricesToShader();
@@ -450,6 +473,7 @@
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
                 gl.enable(gl.CULL_FACE);
+                
                
                 //Added//
                 renderingLoop();
